@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>News WS</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        li {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .desc {
+            margin-top: 5px;
+            color: #555;
+        }
+
+        .date {
+            margin-top: 5px;
+            font-size: 12px;
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🔥 Real-time News</h1>
+
+<ul id="news-list"></ul>
+
+<script>
+const socket = new WebSocket("ws://127.0.0.1:8000/ws/news/");
+const list = document.getElementById("news-list");
+
+// -------------------------
+// MAIN SOCKET HANDLER
+// -------------------------
+socket.onmessage = function(e) {
+    const message = JSON.parse(e.data);
+
+    console.log("WS:", message);
+
+    const eventType = message.event;
+    const data = message.data;
+
+    if (eventType === "init") {
+        renderAll(data);
+    }
+
+    if (eventType === "new_news") {
+        addNews(data);
+    }
+
+    if (eventType === "update_news") {
+        updateNews(data);
+    }
+
+    if (eventType === "delete_news") {
+        removeNews(data.id);
+    }
+};
+
+// -------------------------
+// INIT
+// -------------------------
+function renderAll(newsList) {
+    list.innerHTML = "";
+    newsList.forEach(addNews);
+}
+
+// -------------------------
+// CREATE
+// -------------------------
+function addNews(news) {
+    const li = document.createElement("li");
+    li.id = "news-" + news.id;
+
+    li.innerHTML = `
+        <div class="title">${news.title}</div>
+        <div class="desc">${news.short_description}</div>
+        <div class="desc">${news.description}</div>
+        <div class="date">${news.created_at}</div>
+    `;
+
+    list.prepend(li);
+}
+
+// -------------------------
+// UPDATE
+// -------------------------
+function updateNews(news) {
+    const li = document.getElementById("news-" + news.id);
+
+    if (li) {
+        li.innerHTML = `
+            <div class="title">${news.title}</div>
+            <div class="desc">${news.short_description}</div>
+            <div class="desc">${news.description}</div>
+            <div class="date">${news.created_at}</div>
+        `;
+    }
+}
+
+// -------------------------
+// DELETE
+// -------------------------
+function removeNews(id) {
+    const li = document.getElementById("news-" + id);
+    if (li) li.remove();
+}
+
+// -------------------------
+socket.onopen = () => console.log("Connected");
+socket.onclose = () => console.log("Disconnected");
+socket.onerror = (e) => console.log("Error", e);
+</script>
+
+</body>
+</html>
